@@ -13,7 +13,7 @@ import httpx
 
 from ..parser import create_parser_state, parse_line
 from .sessions import SessionStore
-from .transform import request_to_cli_args
+from .transform import message_to_stream_json, request_to_cli_args
 
 if TYPE_CHECKING:
     from ..types import PermissionMode
@@ -76,6 +76,14 @@ class CLITransport(httpx.BaseTransport):
         else:
             return self._create_non_streaming_response(cli_args, body)
 
+    def _get_stdin_input(self, messages: list[dict[str, Any]]) -> str | None:
+        """Get stdin input from the last user message."""
+        for i in range(len(messages) - 1, -1, -1):
+            msg = messages[i]
+            if msg.get("role") == "user":
+                return message_to_stream_json(msg) + "\n"
+        return None
+
     def _create_streaming_response(
         self, cli_args: list[str], request_body: dict[str, Any]
     ) -> httpx.Response:
@@ -85,9 +93,15 @@ class CLITransport(httpx.BaseTransport):
             cwd=self.cwd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            stdin=subprocess.DEVNULL,
+            stdin=subprocess.PIPE,
             env={**os.environ, "NO_COLOR": "1"},
         )
+
+        # Send message via stdin (supports images)
+        stdin_input = self._get_stdin_input(request_body.get("messages", []))
+        if stdin_input and process.stdin:
+            process.stdin.write(stdin_input.encode())
+            process.stdin.close()
 
         def generate_sse() -> Iterator[bytes]:
             """Generate SSE events from CLI output."""
@@ -274,7 +288,7 @@ class CLITransport(httpx.BaseTransport):
             cwd=self.cwd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            stdin=subprocess.DEVNULL,
+            stdin=subprocess.PIPE,
             env={**os.environ, "NO_COLOR": "1"},
         )
 
@@ -285,8 +299,12 @@ class CLITransport(httpx.BaseTransport):
         output_tokens = 0
         error_message: str | None = None
 
+        # Get stdin input for the message (supports images)
+        stdin_input = self._get_stdin_input(request_body.get("messages", []))
+        stdin_bytes = stdin_input.encode() if stdin_input else None
+
         try:
-            stdout, stderr = process.communicate(timeout=self.timeout_ms / 1000)
+            stdout, stderr = process.communicate(input=stdin_bytes, timeout=self.timeout_ms / 1000)
         except subprocess.TimeoutExpired:
             process.kill()
             stdout, stderr = process.communicate()
@@ -392,6 +410,14 @@ class AsyncCLITransport(httpx.AsyncBaseTransport):
         self.timeout_ms = timeout_ms
         self.sessions = sessions or SessionStore()
 
+    def _get_stdin_input(self, messages: list[dict[str, Any]]) -> str | None:
+        """Get stdin input from the last user message."""
+        for i in range(len(messages) - 1, -1, -1):
+            msg = messages[i]
+            if msg.get("role") == "user":
+                return message_to_stream_json(msg) + "\n"
+        return None
+
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
         """Handle an outgoing request."""
         url = str(request.url)
@@ -437,9 +463,17 @@ class AsyncCLITransport(httpx.AsyncBaseTransport):
             cwd=self.cwd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            stdin=subprocess.DEVNULL,
+            stdin=asyncio.subprocess.PIPE,
             env={**os.environ, "NO_COLOR": "1"},
         )
+
+        # Send message via stdin (supports images)
+        stdin_input = self._get_stdin_input(request_body.get("messages", []))
+        if stdin_input and process.stdin:
+            process.stdin.write(stdin_input.encode())
+            await process.stdin.drain()
+            process.stdin.close()
+            await process.stdin.wait_closed()
 
         async def generate_sse() -> bytes:
             """Generate SSE events from CLI output."""
@@ -652,7 +686,7 @@ class AsyncCLITransport(httpx.AsyncBaseTransport):
             cwd=self.cwd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            stdin=subprocess.DEVNULL,
+            stdin=asyncio.subprocess.PIPE,
             env={**os.environ, "NO_COLOR": "1"},
         )
 
@@ -663,9 +697,13 @@ class AsyncCLITransport(httpx.AsyncBaseTransport):
         output_tokens = 0
         error_message: str | None = None
 
+        # Get stdin input for the message (supports images)
+        stdin_input = self._get_stdin_input(request_body.get("messages", []))
+        stdin_bytes = stdin_input.encode() if stdin_input else None
+
         try:
             stdout, stderr = await asyncio.wait_for(
-                process.communicate(),
+                process.communicate(input=stdin_bytes),
                 timeout=self.timeout_ms / 1000,
             )
         except asyncio.TimeoutError:

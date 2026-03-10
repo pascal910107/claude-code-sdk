@@ -105,6 +105,40 @@ response = client.messages.create(
 print(response.content[0].text)  # "Your name is Alice."
 ```
 
+### Image Input
+
+```python
+import base64
+from claude_code_sdk import create_claude_client
+
+client = create_claude_client()
+
+# Load image as base64
+with open("image.png", "rb") as f:
+    image_data = base64.b64encode(f.read()).decode("utf-8")
+
+message = client.messages.create(
+    model="claude-sonnet-4-20250514",
+    max_tokens=1024,
+    messages=[{
+        "role": "user",
+        "content": [
+            {
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": "image/png",
+                    "data": image_data,
+                },
+            },
+            {"type": "text", "text": "Describe this image"},
+        ],
+    }]
+)
+
+print(message.content[0].text)
+```
+
 ## Configuration
 
 ```python
@@ -149,7 +183,8 @@ This SDK creates an Anthropic client with a custom `httpx` transport that interc
 | Multi-turn conversations | Supported |
 | System prompt | Supported |
 | Async support | Supported |
-| Images/PDF | Not supported (CLI limitation) |
+| Image input (base64) | Supported |
+| PDF input | Not supported (CLI limitation) |
 | Custom tools | Not supported (CLI limitation) |
 
 ## License

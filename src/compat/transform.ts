@@ -56,6 +56,8 @@ export function requestToCliArgs(
     "--print",
     "--output-format",
     "stream-json",
+    "--input-format",
+    "stream-json",
     "--verbose",
   ];
 
@@ -90,11 +92,26 @@ export function requestToCliArgs(
     args.push("--system-prompt", body.system);
   }
 
-  // Extract the prompt (last user message)
-  const prompt = extractPrompt(body.messages);
-  args.push(prompt);
+  // Note: prompt is now sent via stdin using stream-json format
+  // This enables support for multimodal content (images)
 
   return args;
+}
+
+/**
+ * Converts an Anthropic message to CLI stream-json input format
+ *
+ * @param message The Anthropic message to convert
+ * @returns JSON string for stdin input
+ */
+export function messageToStreamJson(message: AnthropicMessage): string {
+  return JSON.stringify({
+    type: "user",
+    message: {
+      role: message.role,
+      content: message.content,
+    },
+  });
 }
 
 /**
@@ -116,46 +133,4 @@ function parseModel(model: string): string {
 
   // Default to sonnet for unknown models
   return "sonnet";
-}
-
-/**
- * Extracts the text prompt from the last user message
- */
-function extractPrompt(messages: AnthropicMessage[]): string {
-  // Find the last user message
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const msg = messages[i];
-    if (msg && msg.role === "user") {
-      return extractTextContent(msg.content);
-    }
-  }
-
-  // Fallback: extract from any message with text
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const msg = messages[i];
-    if (msg) {
-      const text = extractTextContent(msg.content);
-      if (text) return text;
-    }
-  }
-
-  return "";
-}
-
-/**
- * Extracts text content from a message content field
- */
-function extractTextContent(content: string | AnthropicContentBlock[] | undefined): string {
-  if (!content) return "";
-
-  if (typeof content === "string") {
-    return content;
-  }
-
-  // Array of content blocks
-  const textBlocks = content
-    .filter((block): block is { type: "text"; text: string } => block.type === "text")
-    .map((block) => block.text);
-
-  return textBlocks.join("\n");
 }

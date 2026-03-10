@@ -1,5 +1,6 @@
 """Transform Anthropic API requests to CLI arguments."""
 
+import json
 import re
 from typing import Any
 
@@ -27,6 +28,8 @@ def request_to_cli_args(
         "--print",
         "--output-format",
         "stream-json",
+        "--input-format",
+        "stream-json",
         "--verbose",
     ]
 
@@ -53,12 +56,29 @@ def request_to_cli_args(
     if system_prompt:
         args.extend(["--system-prompt", system_prompt])
 
-    # Extract the prompt (last user message)
-    messages = body.get("messages", [])
-    prompt = extract_prompt(messages)
-    args.append(prompt)
+    # Note: prompt is now sent via stdin using stream-json format
+    # This enables support for multimodal content (images)
 
     return args
+
+
+def message_to_stream_json(message: dict[str, Any]) -> str:
+    """
+    Converts an Anthropic message to CLI stream-json input format.
+
+    Args:
+        message: The Anthropic message dict with 'role' and 'content'
+
+    Returns:
+        JSON string for stdin input
+    """
+    return json.dumps({
+        "type": "user",
+        "message": {
+            "role": message.get("role"),
+            "content": message.get("content"),
+        },
+    })
 
 
 def parse_model(model: str) -> str:
@@ -80,38 +100,3 @@ def parse_model(model: str) -> str:
 
     # Default to sonnet for unknown models
     return "sonnet"
-
-
-def extract_prompt(messages: list[dict[str, Any]]) -> str:
-    """Extracts the text prompt from the last user message."""
-    # Find the last user message
-    for i in range(len(messages) - 1, -1, -1):
-        msg = messages[i]
-        if msg.get("role") == "user":
-            return extract_text_content(msg.get("content"))
-
-    # Fallback: extract from any message with text
-    for i in range(len(messages) - 1, -1, -1):
-        msg = messages[i]
-        text = extract_text_content(msg.get("content"))
-        if text:
-            return text
-
-    return ""
-
-
-def extract_text_content(content: str | list[dict[str, Any]] | None) -> str:
-    """Extracts text content from a message content field."""
-    if not content:
-        return ""
-
-    if isinstance(content, str):
-        return content
-
-    # Array of content blocks
-    texts = []
-    for block in content:
-        if isinstance(block, dict) and block.get("type") == "text":
-            texts.append(block.get("text", ""))
-
-    return "\n".join(texts)

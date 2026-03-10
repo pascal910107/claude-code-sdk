@@ -116,6 +116,29 @@ const client = createClaudeClient({
 | `plan` | Planning only, no actual execution |
 | `ask` | Requires confirmation for each operation (not recommended for SDK use) |
 
+## Image Input
+
+```typescript
+const message = await client.messages.create({
+  model: 'claude-sonnet-4-20250514',
+  max_tokens: 1024,
+  messages: [{
+    role: 'user',
+    content: [
+      {
+        type: 'image',
+        source: {
+          type: 'base64',
+          media_type: 'image/png',
+          data: '...',  // base64-encoded image
+        },
+      },
+      { type: 'text', text: 'Describe this image' },
+    ],
+  }],
+});
+```
+
 ## Supported Features
 
 | Feature | Status |
@@ -124,7 +147,8 @@ const client = createClaudeClient({
 | Streaming responses | Supported |
 | Multi-turn conversations | Supported |
 | System prompt | Supported |
-| Images/PDF | Not supported (CLI limitation) |
+| Image input (base64) | Supported |
+| PDF input | Not supported (CLI limitation) |
 | Custom tools | Not supported (CLI limitation) |
 
 ## How It Works

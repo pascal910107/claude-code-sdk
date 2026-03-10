@@ -105,6 +105,40 @@ response = client.messages.create(
 print(response.content[0].text)  # "你叫小張。"
 ```
 
+### 圖片輸入
+
+```python
+import base64
+from claude_code_sdk import create_claude_client
+
+client = create_claude_client()
+
+# 讀取圖片並轉為 base64
+with open("image.png", "rb") as f:
+    image_data = base64.b64encode(f.read()).decode("utf-8")
+
+message = client.messages.create(
+    model="claude-sonnet-4-20250514",
+    max_tokens=1024,
+    messages=[{
+        "role": "user",
+        "content": [
+            {
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": "image/png",
+                    "data": image_data,
+                },
+            },
+            {"type": "text", "text": "描述這張圖片"},
+        ],
+    }]
+)
+
+print(message.content[0].text)
+```
+
 ## 設定
 
 ```python
@@ -149,7 +183,8 @@ client = create_claude_client(
 | 多輪對話 | 支援 |
 | System Prompt | 支援 |
 | 非同步支援 | 支援 |
-| 圖片/PDF | 不支援（CLI 限制）|
+| 圖片輸入（base64）| 支援 |
+| PDF 輸入 | 不支援（CLI 限制）|
 | 自訂 Tools | 不支援（CLI 限制）|
 
 ## 授權條款

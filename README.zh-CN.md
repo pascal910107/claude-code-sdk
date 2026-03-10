@@ -116,6 +116,29 @@ const client = createClaudeClient({
 | `plan` | 僅規劃，不實際執行 |
 | `ask` | 每個操作都需要確認（不建議用於 SDK）|
 
+## 圖片輸入
+
+```typescript
+const message = await client.messages.create({
+  model: 'claude-sonnet-4-20250514',
+  max_tokens: 1024,
+  messages: [{
+    role: 'user',
+    content: [
+      {
+        type: 'image',
+        source: {
+          type: 'base64',
+          media_type: 'image/png',
+          data: '...',  // base64 編碼的圖片
+        },
+      },
+      { type: 'text', text: '描述這張圖片' },
+    ],
+  }],
+});
+```
+
 ## 支援功能
 
 | 功能 | 狀態 |
@@ -124,7 +147,8 @@ const client = createClaudeClient({
 | 串流回應 | 支援 |
 | 多輪對話 | 支援 |
 | System Prompt | 支援 |
-| 圖片/PDF | 不支援（CLI 限制）|
+| 圖片輸入（base64）| 支援 |
+| PDF 輸入 | 不支援（CLI 限制）|
 | 自訂 Tools | 不支援（CLI 限制）|
 
 ## 運作原理

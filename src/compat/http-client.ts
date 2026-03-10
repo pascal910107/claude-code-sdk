@@ -1,5 +1,10 @@
 import { spawn, type ChildProcess } from "child_process";
-import { requestToCliArgs, type MessagesRequest } from "./transform.js";
+import {
+  requestToCliArgs,
+  messageToStreamJson,
+  type MessagesRequest,
+  type AnthropicMessage,
+} from "./transform.js";
 import { SessionStore } from "./sessions.js";
 import { streamLines, parseLine, createParserState } from "../parser.js";
 import type { PermissionMode } from "../types.js";
@@ -101,6 +106,27 @@ async function handleMessagesRequest(
   }
 }
 
+/**
+ * Writes message to CLI stdin in stream-json format
+ */
+function writeMessageToStdin(
+  child: ChildProcess,
+  messages: AnthropicMessage[]
+): void {
+  if (!child.stdin) return;
+
+  // Find the last user message and send it via stdin
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    if (msg && msg.role === "user") {
+      const jsonInput = messageToStreamJson(msg);
+      child.stdin.write(jsonInput + "\n");
+      break;
+    }
+  }
+  child.stdin.end();
+}
+
 async function createStreamingResponse(
   cliArgs: string[],
   options: HandleRequestOptions,
@@ -115,8 +141,8 @@ async function createStreamingResponse(
     },
   });
 
-  // Close stdin immediately - CLI doesn't need input
-  child.stdin?.end();
+  // Send message via stdin in stream-json format (supports images)
+  writeMessageToStdin(child, requestBody.messages);
 
   const parserState = createParserState();
   const messageId = `msg_${Date.now()}`;
@@ -314,8 +340,8 @@ async function createNonStreamingResponse(
     },
   });
 
-  // Close stdin immediately - CLI doesn't need input
-  child.stdin?.end();
+  // Send message via stdin in stream-json format (supports images)
+  writeMessageToStdin(child, requestBody.messages);
 
   const parserState = createParserState();
   const contentBlocks: Array<{ type: string; text?: string; thinking?: string; id?: string; name?: string; input?: unknown }> = [];
