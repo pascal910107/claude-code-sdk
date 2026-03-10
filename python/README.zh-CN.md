@@ -8,18 +8,16 @@ Claude Code CLI 的 Anthropic SDK 相容層。
 
 ## 安裝
 
-Clone 並在本地安裝：
-
 ```bash
 # Clone 專案
 git clone https://github.com/pascal910107/claude-code-sdk.git
-cd claude-code-sdk/python
 
-# 以開發模式安裝
-pip install -e .
+# 在你的專案中，用絕對路徑安裝
+cd /path/to/your-project
+pip install -e /path/to/claude-code-sdk/python
 
 # 包含 Anthropic SDK（建議）
-pip install -e ".[anthropic]"
+pip install -e "/path/to/claude-code-sdk/python[anthropic]"
 ```
 
 ## 前置需求

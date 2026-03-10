@@ -8,18 +8,16 @@ Use the familiar Anthropic SDK interface while leveraging your Claude Code subsc
 
 ## Installation
 
-Clone and install locally:
-
 ```bash
 # Clone the repository
 git clone https://github.com/pascal910107/claude-code-sdk.git
-cd claude-code-sdk/python
 
-# Install in development mode
-pip install -e .
+# In your project, install with absolute path
+cd /path/to/your-project
+pip install -e /path/to/claude-code-sdk/python
 
 # With Anthropic SDK (recommended)
-pip install -e ".[anthropic]"
+pip install -e "/path/to/claude-code-sdk/python[anthropic]"
 ```
 
 ## Prerequisites
