@@ -4,15 +4,36 @@ Use your Claude Code subscription instead of Anthropic API credits — **no API 
 
 Drop-in replacement with the same API as the official Anthropic SDK.
 
-## Installation
+> **Note:** This is a personal tool, not published to npm. For official programmatic access, see [@anthropic-ai/claude-agent-sdk](https://www.npmjs.com/package/@anthropic-ai/claude-agent-sdk).
 
-```bash
-npm install claude-code-sdk @anthropic-ai/sdk
-```
+## Prerequisites
 
-Prerequisites:
 - Claude Code CLI installed: `npm install -g @anthropic-ai/claude-code`
 - Logged in: `claude login`
+
+## Installation
+
+Clone and link locally:
+
+```bash
+# Clone the repository
+git clone https://github.com/pascal910107/claude-code-sdk.git
+cd claude-code-sdk
+
+# Install dependencies
+npm install
+
+# Build the package
+npm run build
+
+# Link globally
+npm link
+
+# In your project, link the package
+cd /path/to/your-project
+npm link claude-code-sdk
+npm install @anthropic-ai/sdk
+```
 
 ## Quick Start
 
@@ -72,11 +93,21 @@ const msg2 = await client.messages.create({
 
 ```typescript
 const client = createClaudeClient({
-  cwd: '/path/to/project',     // Working directory
-  permissionMode: 'auto',       // 'auto' | 'acceptEdits' | 'plan' | 'ask'
-  binaryPath: 'claude',         // CLI path
+  cwd: '/path/to/project',      // Working directory
+  permissionMode: 'auto',        // 'auto' | 'acceptEdits' | 'plan' | 'ask'
+  binaryPath: 'claude',          // CLI path
+  timeoutMs: 120000,             // Timeout in milliseconds (default: 2 minutes)
 });
 ```
+
+### Permission Modes
+
+| Mode | Behavior |
+|------|----------|
+| `auto` (default) | Skips all permission prompts, executes automatically |
+| `acceptEdits` | Auto-accepts file edits, other operations may need confirmation |
+| `plan` | Planning only, no actual execution |
+| `ask` | Requires confirmation for each operation (not recommended for SDK use) |
 
 ## Supported Features
 
