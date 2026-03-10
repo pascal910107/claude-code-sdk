@@ -22,7 +22,7 @@
     "build": "tsdown src/index.ts --format esm,cjs --dts",
     "dev": "tsdown src/index.ts --format esm,cjs --dts --watch",
     "typecheck": "tsc --noEmit",
-    "example": "tsx examples/with-anthropic-sdk.ts"
+    "example": "tsx examples/basic-usage.ts"
   },
   "keywords": ["claude", "ai", "cli", "anthropic", "claude-code"],
   "license": "MIT",

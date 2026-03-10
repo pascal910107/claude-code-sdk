@@ -6,6 +6,13 @@ Drop-in replacement with the same API as the official Anthropic SDK.
 
 > **Note:** This is a personal tool, not published to npm. For official programmatic access, see [@anthropic-ai/claude-agent-sdk](https://www.npmjs.com/package/@anthropic-ai/claude-agent-sdk).
 
+## Language Support
+
+| Language | Location | Status |
+|----------|----------|--------|
+| TypeScript/Node.js | This directory | Stable |
+| Python | [python/](./python/) | Stable |
+
 ## Prerequisites
 
 - Claude Code CLI installed: `npm install -g @anthropic-ai/claude-code`

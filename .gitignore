@@ -2,3 +2,21 @@ node_modules/
 dist/
 *.tsbuildinfo
 bun.lock
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+eggs/
+.eggs/
+*.egg-info/
+*.egg
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.venv/
+venv/

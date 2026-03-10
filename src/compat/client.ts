@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { createCustomFetch } from "./fetch.js";
+import { createCustomFetch } from "./http-client.js";
 import { SessionStore } from "./sessions.js";
 import type { PermissionMode } from "../types.js";
 

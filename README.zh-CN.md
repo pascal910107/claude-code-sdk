@@ -6,6 +6,13 @@ Drop-in replacement，API 與官方 Anthropic SDK 完全相同。
 
 > **注意：** 這是個人工具，未發布到 npm。如需官方程式化存取方式，請參考 [@anthropic-ai/claude-agent-sdk](https://www.npmjs.com/package/@anthropic-ai/claude-agent-sdk)。
 
+## 語言支援
+
+| 語言 | 位置 | 狀態 |
+|------|------|------|
+| TypeScript/Node.js | 本目錄 | 穩定 |
+| Python | [python/](./python/) | 穩定 |
+
 ## 前置需求
 
 - 已安裝 Claude Code CLI：`npm install -g @anthropic-ai/claude-code`
