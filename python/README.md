@@ -2,9 +2,12 @@
 
 Anthropic SDK compatibility layer for Claude Code CLI.
 
-Use the familiar Anthropic SDK interface while leveraging your Claude Code subscription instead of API credits.
+> **Note:** For TypeScript/Node.js, see the [root README](../README.md).
 
-> **Note:** For the TypeScript/Node.js version, see the [root README](../README.md).
+## Prerequisites
+
+- Claude Code CLI installed and authenticated (`claude` command available)
+- Python 3.10+
 
 ## Installation
 
@@ -20,14 +23,7 @@ pip install -e /path/to/claude-code-sdk/python
 pip install -e "/path/to/claude-code-sdk/python[anthropic]"
 ```
 
-## Prerequisites
-
-- Claude Code CLI installed and authenticated (`claude` command available)
-- Python 3.10+
-
-## Usage
-
-### Basic Usage
+## Quick Start
 
 ```python
 from claude_code_sdk import create_claude_client
@@ -37,29 +33,13 @@ client = create_claude_client()
 message = client.messages.create(
     model="claude-sonnet-4-20250514",
     max_tokens=1024,
-    messages=[{"role": "user", "content": "Hello, Claude!"}]
+    messages=[{"role": "user", "content": "Hello!"}]
 )
 
 print(message.content[0].text)
 ```
 
-### Streaming
-
-```python
-from claude_code_sdk import create_claude_client
-
-client = create_claude_client()
-
-with client.messages.stream(
-    model="claude-sonnet-4-20250514",
-    max_tokens=1024,
-    messages=[{"role": "user", "content": "Write a haiku about coding"}]
-) as stream:
-    for text in stream.text_stream:
-        print(text, end="", flush=True)
-```
-
-### Async Usage
+## Async Usage
 
 ```python
 import asyncio
@@ -67,7 +47,6 @@ from claude_code_sdk import create_async_claude_client
 
 async def main():
     client = create_async_claude_client()
-
     message = await client.messages.create(
         model="claude-sonnet-4-20250514",
         max_tokens=1024,
@@ -78,114 +57,48 @@ async def main():
 asyncio.run(main())
 ```
 
-### Multi-turn Conversations
-
-```python
-from claude_code_sdk import create_claude_client
-
-client = create_claude_client()
-messages = []
-
-# First turn
-messages.append({"role": "user", "content": "My name is Alice."})
-response = client.messages.create(
-    model="claude-sonnet-4-20250514",
-    max_tokens=1024,
-    messages=messages
-)
-messages.append({"role": "assistant", "content": response.content[0].text})
-
-# Second turn - Claude remembers the context
-messages.append({"role": "user", "content": "What's my name?"})
-response = client.messages.create(
-    model="claude-sonnet-4-20250514",
-    max_tokens=1024,
-    messages=messages
-)
-print(response.content[0].text)  # "Your name is Alice."
-```
-
-### Image Input
-
-```python
-import base64
-from claude_code_sdk import create_claude_client
-
-client = create_claude_client()
-
-# Load image as base64
-with open("image.png", "rb") as f:
-    image_data = base64.b64encode(f.read()).decode("utf-8")
-
-message = client.messages.create(
-    model="claude-sonnet-4-20250514",
-    max_tokens=1024,
-    messages=[{
-        "role": "user",
-        "content": [
-            {
-                "type": "image",
-                "source": {
-                    "type": "base64",
-                    "media_type": "image/png",
-                    "data": image_data,
-                },
-            },
-            {"type": "text", "text": "Describe this image"},
-        ],
-    }]
-)
-
-print(message.content[0].text)
-```
-
 ## Configuration
 
 ```python
-from claude_code_sdk import create_claude_client
-
 client = create_claude_client(
-    # Working directory for Claude Code CLI
-    cwd="/path/to/project",
-
-    # Permission mode: "auto", "acceptEdits", "plan", or "ask"
-    permission_mode="auto",
-
-    # Custom path to claude executable
-    binary_path="/usr/local/bin/claude",
-
-    # Timeout in milliseconds (default: 120000)
-    timeout_ms=300000,
+    cwd="/path/to/project",       # Working directory
+    permission_mode="auto",        # "auto" | "acceptEdits" | "plan" | "ask"
+    binary_path="claude",          # CLI path
+    timeout_ms=120000,             # Timeout in milliseconds (default: 2 minutes)
 )
 ```
 
-### Permission Modes
-
-- `"auto"` - Automatically approve all tool executions (default, uses `--dangerously-skip-permissions`)
-- `"acceptEdits"` - Auto-approve file edits, ask for other tools
-- `"plan"` - Plan mode, more restrictive
-- `"ask"` - Ask for permission on each tool use
-
-## How It Works
-
-This SDK creates an Anthropic client with a custom `httpx` transport that intercepts API requests and routes them through the Claude Code CLI instead. This allows you to:
-
-1. Use your Claude Code subscription instead of API credits
-2. Leverage Claude Code's tool execution capabilities
-3. Maintain compatibility with existing Anthropic SDK code
+| Permission Mode | Behavior |
+|-----------------|----------|
+| `auto` (default) | Skips all permission prompts |
+| `acceptEdits` | Auto-accepts file edits |
+| `plan` | Planning only, no execution |
+| `ask` | Requires confirmation for each operation |
 
 ## Supported Features
 
 | Feature | Status |
 |---------|--------|
-| Text conversations | Supported |
-| Streaming responses | Supported |
-| Multi-turn conversations | Supported |
-| System prompt | Supported |
-| Async support | Supported |
-| Image input (base64) | Supported |
-| PDF input | Not supported (CLI limitation) |
-| Custom tools | Not supported (CLI limitation) |
+| Text messages | ✓ |
+| Streaming | ✓ |
+| Multi-turn conversations | ✓ |
+| System prompt | ✓ |
+| Async support | ✓ |
+| Images (base64) | ✓ |
+| PDF (base64) | ✓ |
+| Custom tools | ✗ |
+
+## Examples
+
+See [`examples/`](./examples/) for complete examples:
+
+- [`basic_usage.py`](./examples/basic_usage.py) — Text, streaming, multi-turn, async
+- [`multimodal_usage.py`](./examples/multimodal_usage.py) — Image and PDF input
+
+```bash
+python examples/basic_usage.py
+python examples/multimodal_usage.py
+```
 
 ## License
 

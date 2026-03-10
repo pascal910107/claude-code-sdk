@@ -59,43 +59,6 @@ const message = await client.messages.create({
 console.log(message.content[0].text);
 ```
 
-## Streaming
-
-```typescript
-const stream = client.messages.stream({
-  model: 'claude-sonnet-4-20250514',
-  max_tokens: 1024,
-  messages: [{ role: 'user', content: 'Tell me a story' }],
-});
-
-for await (const event of stream) {
-  if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-    process.stdout.write(event.delta.text);
-  }
-}
-```
-
-## Multi-turn Conversations
-
-```typescript
-const msg1 = await client.messages.create({
-  model: 'claude-sonnet-4-20250514',
-  max_tokens: 128,
-  messages: [{ role: 'user', content: 'My name is Alice' }],
-});
-
-const msg2 = await client.messages.create({
-  model: 'claude-sonnet-4-20250514',
-  max_tokens: 128,
-  messages: [
-    { role: 'user', content: 'My name is Alice' },
-    { role: 'assistant', content: msg1.content[0].text },
-    { role: 'user', content: 'What is my name?' },
-  ],
-});
-// Claude will respond with "Alice"
-```
-
 ## Configuration Options
 
 ```typescript
@@ -107,64 +70,41 @@ const client = createClaudeClient({
 });
 ```
 
-### Permission Modes
-
-| Mode | Behavior |
-|------|----------|
+| Permission Mode | Behavior |
+|-----------------|----------|
 | `auto` (default) | Skips all permission prompts, executes automatically |
 | `acceptEdits` | Auto-accepts file edits, other operations may need confirmation |
 | `plan` | Planning only, no actual execution |
 | `ask` | Requires confirmation for each operation (not recommended for SDK use) |
 
-## Image Input
-
-```typescript
-const message = await client.messages.create({
-  model: 'claude-sonnet-4-20250514',
-  max_tokens: 1024,
-  messages: [{
-    role: 'user',
-    content: [
-      {
-        type: 'image',
-        source: {
-          type: 'base64',
-          media_type: 'image/png',
-          data: '...',  // base64-encoded image
-        },
-      },
-      { type: 'text', text: 'Describe this image' },
-    ],
-  }],
-});
-```
-
 ## Supported Features
 
 | Feature | Status |
 |---------|--------|
-| Text conversations | Supported |
-| Streaming responses | Supported |
-| Multi-turn conversations | Supported |
-| System prompt | Supported |
-| Image input (base64) | Supported |
-| PDF input | Not supported (CLI limitation) |
-| Custom tools | Not supported (CLI limitation) |
+| Text messages | ✓ |
+| Streaming | ✓ |
+| Multi-turn conversations | ✓ |
+| System prompt | ✓ |
+| Images (base64) | ✓ |
+| PDF (base64) | ✓ |
+| Custom tools | ✗ |
+
+## Examples
+
+See [`examples/`](./examples/) for complete examples:
+
+- [`basic-usage.ts`](./examples/basic-usage.ts) — Text, streaming, multi-turn
+- [`multimodal-usage.ts`](./examples/multimodal-usage.ts) — Image and PDF input
+
+```bash
+npx tsx examples/basic-usage.ts
+npx tsx examples/multimodal-usage.ts
+```
 
 ## How It Works
 
-Intercepts the Anthropic SDK's fetch calls and routes requests through the Claude CLI:
-
 ```
-client.messages.create()
-       ↓
-Anthropic SDK internally calls fetch
-       ↓
-We intercept and convert to CLI command
-       ↓
-spawn('claude', ['--print', ...])
-       ↓
-CLI output converted back to Anthropic format
+Anthropic SDK → fetch() → [Intercepted] → CLI stdin → Claude Code → Response
 ```
 
 ## License

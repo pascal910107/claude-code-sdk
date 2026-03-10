@@ -59,44 +59,7 @@ const message = await client.messages.create({
 console.log(message.content[0].text);
 ```
 
-## 串流
-
-```typescript
-const stream = client.messages.stream({
-  model: 'claude-sonnet-4-20250514',
-  max_tokens: 1024,
-  messages: [{ role: 'user', content: '說一個故事' }],
-});
-
-for await (const event of stream) {
-  if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-    process.stdout.write(event.delta.text);
-  }
-}
-```
-
-## 多輪對話
-
-```typescript
-const msg1 = await client.messages.create({
-  model: 'claude-sonnet-4-20250514',
-  max_tokens: 128,
-  messages: [{ role: 'user', content: '我叫小張' }],
-});
-
-const msg2 = await client.messages.create({
-  model: 'claude-sonnet-4-20250514',
-  max_tokens: 128,
-  messages: [
-    { role: 'user', content: '我叫小張' },
-    { role: 'assistant', content: msg1.content[0].text },
-    { role: 'user', content: '我叫什麼名字？' },
-  ],
-});
-// Claude 會回答「小張」
-```
-
-## 設定選項
+## 設定
 
 ```typescript
 const client = createClaudeClient({
@@ -107,64 +70,41 @@ const client = createClaudeClient({
 });
 ```
 
-### 權限模式
-
-| 模式 | 行為 |
-|------|------|
+| 權限模式 | 行為 |
+|----------|------|
 | `auto`（預設）| 跳過所有權限確認，自動執行 |
 | `acceptEdits` | 自動接受檔案編輯，其他操作可能需要確認 |
 | `plan` | 僅規劃，不實際執行 |
 | `ask` | 每個操作都需要確認（不建議用於 SDK）|
 
-## 圖片輸入
-
-```typescript
-const message = await client.messages.create({
-  model: 'claude-sonnet-4-20250514',
-  max_tokens: 1024,
-  messages: [{
-    role: 'user',
-    content: [
-      {
-        type: 'image',
-        source: {
-          type: 'base64',
-          media_type: 'image/png',
-          data: '...',  // base64 編碼的圖片
-        },
-      },
-      { type: 'text', text: '描述這張圖片' },
-    ],
-  }],
-});
-```
-
 ## 支援功能
 
 | 功能 | 狀態 |
 |------|------|
-| 文字對話 | 支援 |
-| 串流回應 | 支援 |
-| 多輪對話 | 支援 |
-| System Prompt | 支援 |
-| 圖片輸入（base64）| 支援 |
-| PDF 輸入 | 不支援（CLI 限制）|
-| 自訂 Tools | 不支援（CLI 限制）|
+| 文字訊息 | ✓ |
+| 串流 | ✓ |
+| 多輪對話 | ✓ |
+| System Prompt | ✓ |
+| 圖片（base64）| ✓ |
+| PDF（base64）| ✓ |
+| 自訂 Tools | ✗ |
+
+## 範例
+
+完整範例請參考 [`examples/`](./examples/)：
+
+- [`basic-usage.ts`](./examples/basic-usage.ts) — 文字、串流、多輪對話
+- [`multimodal-usage.ts`](./examples/multimodal-usage.ts) — 圖片與 PDF 輸入
+
+```bash
+npx tsx examples/basic-usage.ts
+npx tsx examples/multimodal-usage.ts
+```
 
 ## 運作原理
 
-攔截 Anthropic SDK 的 fetch 呼叫，將請求轉送至 Claude CLI：
-
 ```
-client.messages.create()
-       ↓
-Anthropic SDK 內部呼叫 fetch
-       ↓
-攔截並轉換為 CLI 指令
-       ↓
-spawn('claude', ['--print', ...])
-       ↓
-CLI 輸出轉換回 Anthropic 格式
+Anthropic SDK → fetch() → [攔截] → CLI stdin → Claude Code → 回應
 ```
 
 ## 授權條款
